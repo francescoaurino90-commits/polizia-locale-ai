@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1f33">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Polizia Locale AI">
+<link rel="manifest" href="manifest.json">
+<title>Polizia Locale AI</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;color:#142333;background:#f3f5f7}
+*{box-sizing:border-box}body{margin:0;background:#f3f5f7}.app{max-width:720px;margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 16px calc(28px + env(safe-area-inset-bottom))}
+header{padding:22px 4px 14px}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5c7185}.title{font-size:32px;font-weight:800;margin:4px 0}.sub{color:#617384}
+.search{background:white;border:1px solid #dbe1e6;border-radius:18px;padding:12px;box-shadow:0 8px 24px #1020300b}
+textarea{width:100%;border:0;outline:0;resize:none;font:inherit;font-size:17px;min-height:78px}.actions{display:flex;gap:8px;overflow:auto;padding-top:8px}
+button{font:inherit;border:0;border-radius:12px;padding:11px 14px;font-weight:700;cursor:pointer}.primary{background:#0b1f33;color:white;width:100%;margin-top:10px}.chip{background:#e9eef3;color:#22394d;white-space:nowrap}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}.tile{text-align:left;background:white;min-height:112px;padding:15px;border:1px solid #dce2e7}.tile b{display:block;font-size:17px;margin:8px 0 4px}.tile span{font-size:12px;color:#657789}.card{background:white;border:1px solid #dce2e7;border-radius:18px;padding:17px;margin-top:16px}.badge{display:inline-block;background:#e9f4ec;color:#21653a;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:800}.ref{background:#f5f7f9;border-radius:12px;padding:10px;margin-top:7px;font-size:13px}.step{display:flex;gap:10px;margin:9px 0;font-size:14px;line-height:1.35}.num{min-width:24px;height:24px;border-radius:50%;background:#e8eef5;display:grid;place-items:center;font-size:12px;font-weight:800}.muted{color:#657789;font-size:13px;line-height:1.45}.hidden{display:none}.nav{position:sticky;bottom:10px;display:flex;justify-content:space-around;background:#0b1f33;color:white;border-radius:18px;padding:7px;margin-top:18px;box-shadow:0 12px 30px #0003}.nav button{background:transparent;color:white;font-size:12px}.danger{background:#fff4e9}.sectionTitle{margin:22px 2px 9px;font-size:18px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<div class="eyebrow">Assistente operativo</div>
+<div class="title">Polizia Locale AI</div>
+<div class="sub">Domande normative, procedure e checklist operative.</div>
+</header>
+
+<section class="search">
+<textarea id="q" placeholder="Descrivi il caso… es. “Veicolo senza revisione: cosa devo verificare?”"></textarea>
+<div class="actions">
+<button class="chip" onclick="setArea('cds')">🚗 CDS</button>
+<button class="chip" onclick="setArea('penale')">⚖️ Penale</button>
+<button class="chip" onclick="setArea('ambiente')">🌱 Ambiente</button>
+<button class="chip" onclick="setArea('edilizia')">🏗️ Edilizia</button>
+</div>
+<button class="primary" onclick="ask()">Cerca nella banca normativa</button>
+</section>
+
+<div id="home">
+<div class="sectionTitle">Aree operative</div>
+<div class="grid">
+<button class="tile" onclick="setArea('cds')">🚗<b>Codice della Strada</b><span>Controlli, sanzioni e procedure</span></button>
+<button class="tile" onclick="setArea('penale')">⚖️<b>Codice Penale</b><span>Reati e attività di PG</span></button>
+<button class="tile" onclick="setArea('ambiente')">🌱<b>Ambiente</b><span>Rifiuti, scarichi, controlli</span></button>
+<button class="tile" onclick="setArea('edilizia')">🏗️<b>Edilizia</b><span>Abusi, titoli e sopralluoghi</span></button>
+</div>
+<div class="sectionTitle">Strumenti operativi</div>
+<div class="grid">
+<button class="tile" onclick="showProcedure('pec')">📧<b>Invio PEC</b><span>Checklist di trasmissione</span></button>
+<button class="tile" onclick="showProcedure('procura')">⚖️<b>Atti alla Procura</b><span>Checklist di trasmissione</span></button>
+</div>
+</div>
+
+<div id="result" class="hidden"></div>
+
+<div class="nav">
+<button onclick="home()">⌂ Home</button>
+<button onclick="focusSearch()">⌕ Cerca</button>
+<button onclick="showProcedure('pec')">✉ PEC</button>
+<button onclick="showProcedure('procura')">⚖ Procura</button>
+</div>
+</div>
+
+<script>
+const data={
+cds:{name:"Codice della Strada",icon:"🚗",title:"Verifica secondo il Codice della Strada",text:"Descrivi condotta, veicolo, luogo, segnaletica, documenti e circostanze. La qualificazione va collegata alla disposizione vigente, verificando sanzione, eventuali sanzioni accessorie e procedura.",refs:["D.Lgs. 285/1992 — Codice della Strada","D.P.R. 495/1992 — Regolamento di esecuzione"],steps:["Identificare la condotta e il luogo.","Verificare documenti, veicolo e circostanze.","Individuare articolo e comma nella versione vigente.","Verificare sanzione e conseguenze accessorie.","Documentare gli accertamenti e completare gli atti previsti."]},
+penale:{name:"Codice Penale",icon:"⚖️",title:"Valutazione della fattispecie penale",text:"Parti dai fatti oggettivamente accertati: condotta, soggetto, elemento soggettivo, eventuale evento e procedibilità. Poi collega i fatti alla fattispecie prevista dalla legge.",refs:["Codice Penale","Codice di Procedura Penale","Norme speciali applicabili"],steps:["Descrivere i fatti senza anticipare conclusioni.","Individuare la possibile fattispecie e gli elementi costitutivi.","Verificare procedibilità e competenze.","Raccogliere e documentare gli elementi pertinenti.","Predisporre gli atti secondo le procedure di PG."]},
+ambiente:{name:"Ambiente",icon:"🌱",title:"Verifica ambientale",text:"Individua condotta, tipologia di rifiuto/materiale, luogo, soggetti, autorizzazioni e circostanze. La qualificazione dipende dai fatti e dalla normativa vigente.",refs:["D.Lgs. 152/2006 — Parte IV","Normativa regionale applicabile","Regolamenti comunali pertinenti"],steps:["Documentare luogo e situazione.","Identificare natura e quantità dei materiali.","Verificare soggetti, autorizzazioni e obblighi.","Acquisire fotografie e altri elementi utili.","Individuare la disciplina vigente e gli atti conseguenti."]},
+edilizia:{name:"Edilizia",icon:"🏗️",title:"Accertamento edilizio",text:"Ricostruisci lo stato dei luoghi, acquisisci gli atti edilizi disponibili, confronta opere e titoli e documenta le eventuali difformità.",refs:["D.P.R. 380/2001","Strumenti urbanistici comunali","Normativa regionale vigente"],steps:["Documentare lo stato dei luoghi.","Acquisire titolo edilizio e documentazione disponibile.","Confrontare opere eseguite e titolo.","Verificare zona urbanistica e disciplina applicabile.","Predisporre relazione e atti di competenza."]}}
+function setArea(a){q.value=data[a].name+": ";q.focus();ask(a)}
+function ask(area){
+let s=q.value.toLowerCase();let a=area|| (s.includes("rifiut")||s.includes("scaric")?"ambiente":s.includes("edil")||s.includes("abus")?"edilizia":s.includes("reat")||s.includes("penal")?"penale":"cds");renderAnswer(data[a],s)
+}
+function renderAnswer(d,s){
+home(false);result.classList.remove("hidden");result.innerHTML=`<div class="card"><span class="badge">DA VERIFICARE</span><h2>${d.icon} ${d.title}</h2><p>${d.text}</p><h3>Riferimenti</h3>${d.refs.map(x=>`<div class="ref">📄 ${x}</div>`).join("")}<h3>Note operative</h3>${d.steps.map((x,i)=>`<div class="step"><span class="num">${i+1}</span><span>${x}</span></div>`).join("")}<div class="card danger"><b>Attenzione</b><p class="muted">Prima di applicare la risposta verificare il testo vigente, gli aggiornamenti, la normativa regionale/locale e le disposizioni del proprio Comando o dell'autorità competente.</p></div></div>`}
+function showProcedure(type){
+home(false);result.classList.remove("hidden");
+let pec=type==="pec";
+let title=pec?"📧 Invio tramite PEC":"⚖️ Trasmissione atti alla Procura";
+let steps=pec?[
+"Verificare l’indirizzo PEC ufficiale del destinatario.",
+"Preparare l’atto e verificare firma digitale, allegati e leggibilità.",
+"Indicare chiaramente oggetto, procedimento e riferimenti dell’atto.",
+"Allegare solo la documentazione necessaria secondo le regole interne.",
+"Inviare dalla casella istituzionale autorizzata.",
+"Conservare ricevute di accettazione e avvenuta consegna.",
+"Registrare gli estremi nel protocollo/fascicolo secondo le procedure dell’ente."
+]:[
+"Verificare la natura dell’atto e gli adempimenti previsti.",
+"Predisporre relazione/annotazione di PG e documentazione allegata.",
+"Numerare o indicizzare gli allegati.",
+"Indicare estremi del procedimento, fatto, soggetti e attività compiute.",
+"Verificare Procura competente e canale di trasmissione previsto.",
+"Applicare firma digitale, protocollazione e regole di riservatezza.",
+"Conservare prova della trasmissione nel fascicolo."
+];
+result.innerHTML=`<div class="card"><span class="badge">CHECKLIST OPERATIVA</span><h2>${title}</h2>${steps.map((x,i)=>`<div class="step"><span class="num">${i+1}</span><span>${x}</span></div>`).join("")}<div class="card danger"><b>Nota</b><p class="muted">Le modalità possono cambiare in base alla Procura, al tipo di atto e ai sistemi telematici vigenti. Verificare sempre le disposizioni ufficiali del destinatario e del proprio Comando.</p></div></div>`}
+function home(show=true){result.classList.add("hidden"); if(show){document.getElementById("home").scrollIntoView()}}
+function focusSearch(){q.focus();window.scrollTo({top:0,behavior:"smooth"})}
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+</script>
+</body></html>
